@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FB Print Numerador — Protótipo Capas v7</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#20242a;color:#eef2f5;height:100vh;overflow:hidden}
+header{height:58px;background:#14171b;border-bottom:1px solid #373e47;display:flex;align-items:center;padding:0 18px;gap:25px}
+.brand{font-weight:800;white-space:nowrap}.brand span{color:#ff4fa3}.tabs{display:flex;height:100%;gap:3px}.tab{border:0;border-radius:0;background:transparent;color:#9ea8b4;padding:0 20px;border-bottom:3px solid transparent;cursor:pointer}.tab.active{color:#fff;border-bottom-color:#ff4fa3;background:#20242a}
+.main{height:calc(100vh - 58px);display:grid;grid-template-columns:330px 1fr}.sidebar{background:#272c33;border-right:1px solid #3b424b;padding:16px;overflow:auto}.work{overflow:auto;background:#343a42;background-image:linear-gradient(#3d444d 1px,transparent 1px),linear-gradient(90deg,#3d444d 1px,transparent 1px);background-size:20px 20px}
+.stage{min-width:900px;min-height:720px;padding:55px;display:flex;justify-content:center;align-items:flex-start}
+h3{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#9da7b3;margin:5px 0 12px}label{display:block;font-size:12px;color:#bdc5ce;margin:8px 0 4px}
+input,select{width:100%;background:#181c21;color:#fff;border:1px solid #434b56;border-radius:6px;padding:8px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button,.fileBtn{border:0;border-radius:7px;padding:9px 11px;background:#3c444e;color:#fff;font-weight:650;cursor:pointer;display:flex;align-items:center;justify-content:center}.primary{background:#ff4fa3;color:#111}.full{width:100%}.fileBtn input{display:none}.sep{border-top:1px solid #3b424b;margin:15px 0}.tip{font-size:11px;line-height:1.5;color:#87919d}.name{font-size:11px;color:#a7b0ba;margin-top:7px;word-break:break-all}
+.panel{display:none}.panel.active{display:block}.canvasPiece{position:relative;background:#fff;color:#111;box-shadow:0 12px 35px #0008;overflow:hidden}.pieceArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}.num{position:absolute;min-width:30px;padding:2px 3px;border:1px dashed #ff238a;background:#ffffff88;font-weight:700;cursor:grab;text-align:center;user-select:none;white-space:nowrap;transform-origin:center;touch-action:none}.num:active{cursor:grabbing}.num.sel{outline:1px solid #ff238a}
+.sheet{position:relative;background:#fff;box-shadow:0 12px 35px #0009;color:#111;overflow:hidden}.placed{position:absolute;overflow:hidden}.placed img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.placedNum{position:absolute;white-space:nowrap;font-weight:700;transform-origin:center}.cropH,.cropV{position:absolute;background:#222;opacity:.65}.cropH{height:1px}.cropV{width:1px}
+.stat{background:#1c2025;border:1px solid #3c444d;border-radius:8px;padding:10px;margin-top:10px;font-size:12px;color:#aeb7c1;line-height:1.7}.stat b{color:#fff}.nav{display:grid;grid-template-columns:1fr 60px 1fr;gap:7px;align-items:center}.nav strong{text-align:center}.check{display:flex;align-items:center;gap:7px;font-size:12px;color:#c5ccd4;margin-top:8px}.check input{width:auto}
+.nudge{display:grid;grid-template-columns:42px 42px 42px;grid-template-rows:38px 38px 38px;justify-content:center;gap:4px;margin:10px 0}.nudge button{padding:0;font-size:17px}.nudge .up{grid-column:2}.nudge .left{grid-column:1;grid-row:2}.nudge .center{grid-column:2;grid-row:2;font-size:10px;color:#9ea8b4}.nudge .right{grid-column:3;grid-row:2}.nudge .down{grid-column:2;grid-row:3}
+.colorrow{display:grid;grid-template-columns:1fr 48px;gap:8px}.colorrow input[type=color]{height:36px;padding:2px}
+.positions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}.posbtn{font-size:11px;padding:7px 3px}.posbtn.on{background:#ff4fa3;color:#111}
+.previewBadge{position:absolute;top:-30px;color:#cbd2da;font-size:12px}
+.confirmed{color:#77dda0}.warn{color:#ffadad}.coverTag{position:absolute;right:3px;bottom:3px;background:#111c;color:#fff;font-size:9px;padding:2px 4px;border-radius:3px;z-index:9}.coverJump{display:grid;grid-template-columns:1fr 78px;gap:7px;margin-top:8px}.coverJump button{width:100%}
+@media print{body{background:#fff}header,.sidebar{display:none!important}.main{display:block;height:auto}.work{background:#fff;overflow:visible}.stage{padding:0;min-width:0;min-height:0}.sheet,.canvasPiece{box-shadow:none}.num{border:0;background:transparent}.num.sel{outline:0}}
+</style>
+</head>
+<body>
+<header><div class="brand"><span>FB PRINT</span> Numerador — Protótipo Capas v7</div><div style="display:flex;align-items:center;padding-left:8px"><button id="backStep" type="button" style="display:none;width:auto;padding:7px 12px">← Voltar</button></div><div class="tabs">
+<button class="tab active" data-tab="arquivo">1. ARQUIVO</button><button class="tab" data-tab="numero">2. NUMERAÇÃO</button><button class="tab" data-tab="impressao">3. IMPRESSÃO</button><button class="tab" data-tab="capas">4. CAPAS</button>
+</div></header>
+<div class="main"><aside class="sidebar">
+<section id="p-arquivo" class="panel active">
+<h3>Arquivo da peça</h3><label class="fileBtn primary full">📄 Abrir PNG / JPG / PDF<input id="file" type="file" accept="image/png,image/jpeg,application/pdf"></label><div class="name" id="fname">Nenhuma arte carregada</div>
+<div class="sep"></div><h3>Tamanho real</h3><div class="row"><div><label>Largura (mm)</label><input id="pieceW" type="number" value="90" step=".1"></div><div><label>Altura (mm)</label><input id="pieceH" type="number" value="140" step=".1"></div></div>
+<label>Orientação</label><select id="pieceOri"><option value="0">Como está</option><option value="90">Girar 90°</option></select><div class="stat">Peça: <b id="pieceStat"></b></div><div class="sep"></div><button class="primary full go" data-go="numero">Continuar →</button>
+</section>
+
+<section id="p-numero" class="panel">
+<h3>Numeração</h3><div class="row"><div><label>Número inicial</label><input id="start" type="number" value="7501"></div><div><label>Número final</label><input id="endNum" type="number" value="7900"></div></div>
+<div class="stat">Total da sequência: <b id="seqTotal">400 números</b></div>
+<label>Modo</label><select id="mode"><option value="cut">Agrupar e cortar</option><option value="normal">Sequencial na folha</option></select>
+<div class="row"><div><label>Fonte</label><select id="font"><option>Arial</option><option>Times New Roman</option><option>Courier New</option></select></div><div><label>Tamanho (pt)</label><input id="fontSize" type="number" value="14" step=".5"></div></div>
+<div class="tip">A fonte escolhida aqui será usada também no PDF final.</div>
+<div class="row"><div><label>Alinhamento</label><select id="align"><option value="left">Esquerda</option><option value="center" selected>Centro</option><option value="right">Direita</option></select></div><div><label>Cor</label><div class="colorrow"><input id="colorHex" value="#000000"><input id="numColor" type="color" value="#000000"></div></div></div>
+<div class="sep"></div><h3>Visualização e zoom</h3>
+<div class="row"><div><label>Zoom da peça</label><select id="zoom"><option value="1">100%</option><option value="1.5">150%</option><option value="2" selected>200%</option><option value="3">300%</option><option value="4">400%</option><option value="6">600%</option><option value="8">800%</option></select></div><div><label>&nbsp;</label><button id="fitZoom" class="full">100%</button></div></div>
+<div class="tip"><b>Mouse:</b> clique e arraste o número diretamente sobre a arte. Depois use as setas para o ajuste fino. O zoom não altera o tamanho físico.</div>
+<div class="sep"></div><h3>Numerações na arte</h3>
+<button id="addNum" class="primary full">+ Inserir numeração</button>
+<button id="deleteNum" class="full" style="margin-top:7px">Excluir numeração selecionada</button>
+<div id="numCount" class="tip" style="margin-top:7px">1 numeração inserida</div>
+<div class="sep"></div><h3>Posição — ajuste fino</h3>
+<div class="row"><div><label>X (mm)</label><input id="nx" type="number" value="10" step=".1"></div><div><label>Y (mm)</label><input id="ny" type="number" value="10" step=".1"></div></div>
+<div class="row"><div><label>Largura (mm)</label><input id="nw" type="number" value="25" step=".1"></div><div><label>Rotação</label><input id="nrot" type="number" value="0" step=".1"></div></div>
+<label>Passo das setas</label><select id="nudgeStep"><option value=".1">0,1 mm — fino</option><option value=".5">0,5 mm</option><option value="1">1 mm</option><option value="5">5 mm</option></select>
+<div class="nudge"><button class="up" data-dx="0" data-dy="-1">↑</button><button class="left" data-dx="-1" data-dy="0">←</button><button class="center" type="button">AJUSTE</button><button class="right" data-dx="1" data-dy="0">→</button><button class="down" data-dx="0" data-dy="1">↓</button></div>
+<button id="centerNum" class="full">Centralizar horizontalmente</button>
+<div class="sep"></div><button id="confirmPos" class="primary full">✓ Confirmar posição do número</button><div id="confirmState" class="tip" style="margin-top:8px">Use o zoom e confira a posição exata do número na arte antes de confirmar.</div>
+<div class="sep"></div><button class="full go" data-go="impressao">Ir para impressão →</button>
+</section>
+
+<section id="p-impressao" class="panel">
+<h3>Folha</h3><label>Formato</label><select id="sheetPreset"><option value="210,297">A4 — 210 × 297</option><option value="297,420" selected>A3 — 297 × 420</option><option value="320,450">SRA3 — 320 × 450</option><option value="custom">Personalizado</option></select>
+<div class="row"><div><label>Largura mm</label><input id="sheetW" type="number" value="297"></div><div><label>Altura mm</label><input id="sheetH" type="number" value="420"></div></div>
+<label>Orientação</label><select id="sheetOri"><option value="p">Vertical</option><option value="l" selected>Horizontal</option></select>
+<label>Margem da folha (mm)</label><input id="margin" type="number" value="5" step=".5">
+<div class="row"><div><label>Espaço horizontal (mm)</label><input id="gapH" type="number" value="2" step=".1"></div><div><label>Espaço vertical (mm)</label><input id="gapV" type="number" value="2" step=".1"></div></div>
+<div class="sep"></div><h3>Distribuição</h3><div class="row"><div><label>Colunas</label><input id="manualCols" type="number" value="2" min="1" max="10"></div><div><label>Linhas</label><input id="manualRows" type="number" value="2" min="1" max="10"></div></div>
+<label class="check"><input type="checkbox" id="autoLayout"> Calcular automaticamente</label><label class="check"><input type="checkbox" id="autoRotate"> Girar peça 90° se necessário</label><label class="check"><input type="checkbox" id="cuts" checked> Marcas simples de corte</label>
+<div class="sep"></div><h3>Girar posições 180°</h3><div class="tip">Clique nas posições que devem ficar de cabeça para baixo. Útil para frente-e-verso, guilhotina e aproveitamento.</div><div id="positions" class="positions"></div>
+<div class="stat" id="layoutStat"></div>
+<div class="sep"></div><h3>Prévia das páginas</h3><div class="nav"><button id="prev">◀</button><strong id="pageN">1</strong><button id="next">▶</button></div>
+<div class="sep"></div><button id="pdfBtn" class="primary full">📄 Gerar e baixar PDF</button><div class="tip" style="margin-top:8px">Cria o arquivo PDF completo com todas as páginas e baixa automaticamente.</div>
+</section>
+
+<section id="p-capas" class="panel">
+<h3>Arte da capa</h3><label class="fileBtn primary full">📘 Abrir arte da capa<input id="coverFile" type="file" accept="image/png,image/jpeg"></label><div class="name" id="coverName">Nenhuma capa carregada</div>
+<div class="sep"></div><h3>Blocos</h3><label>Números por bloco</label><input id="perBlock" type="number" value="100" min="1">
+<div class="stat" id="coverStat"></div>
+<div class="sep"></div><h3>Texto na capa</h3>
+<div class="row"><div><label>X do bloco (mm)</label><input id="coverX" type="number" value="10" step=".5"></div><div><label>Y do bloco (mm)</label><input id="coverY" type="number" value="10" step=".5"></div></div>
+<div class="row"><div><label>X da sequência (mm)</label><input id="coverRangeX" type="number" value="10" step=".5"></div><div><label>Y da sequência (mm)</label><input id="coverRangeY" type="number" value="20" step=".5"></div></div>
+<div class="row"><div><label>Tamanho bloco (pt)</label><input id="coverFs1" type="number" value="16"></div><div><label>Tamanho sequência (pt)</label><input id="coverFs2" type="number" value="12"></div></div>
+<label>Formato do título</label><select id="blockFormat"><option value="pad">BLOCO 01</option><option value="plain">BLOCO 1</option></select>
+<div class="tip">A montagem reaproveita exatamente a folha, colunas, linhas, espaçamentos e rotações configurados em IMPRESSÃO.</div>
+<div class="sep"></div><h3>Prévia completa das capas</h3>
+<div class="tip">Confira aqui exatamente como cada folha de capas ficará antes de gerar o PDF.</div>
+<div class="nav" style="margin-top:9px"><button id="coverPrev">◀ Anterior</button><strong id="coverPageN">1 / 1</strong><button id="coverNext">Próxima ▶</button></div>
+<div class="coverJump"><button id="coverFirst">⏮ Primeira folha</button><input id="coverGo" type="number" value="1" min="1" title="Ir para folha"></div>
+<div class="coverJump"><button id="coverLast">⏭ Última folha</button><button id="coverGoBtn">Ir para folha</button></div>
+<div class="stat" id="coverPageInfo"></div>
+<div class="sep"></div><button id="coverPdfBtn" class="primary full">📄 Gerar PDF das capas</button>
+</section>
+</aside><main class="work"><div class="stage" id="stage"></div></main></div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+const $=id=>document.getElementById(id),S=2.2;let artData='',coverData='',page=0,coverPage=0,current='arquivo',confirmed=false,rot180=new Set();let nums=[{x:10,y:10,w:25,rot:0}],selectedNum=0;
+function viewScale(){return S*(current==='numero'?clamp($('zoom').value,1,8):1)}
+function clamp(v,a,b){v=Number(v);return Number.isFinite(v)?Math.min(b,Math.max(a,v)):a}
+function pieceDims(){let w=clamp($('pieceW').value,1,2000),h=clamp($('pieceH').value,1,2000);if($('pieceOri').value==='90')[w,h]=[h,w];return[w,h]}
+function sheetDims(){let w=clamp($('sheetW').value,1,2000),h=clamp($('sheetH').value,1,2000);if($('sheetOri').value==='l')[w,h]=[h,w];return[w,h]}
+function numStyle(el,scale=S){el.style.left=(clamp($('nx').value,-1000,2000)*scale)+'px';el.style.top=(clamp($('ny').value,-1000,2000)*scale)+'px';el.style.width=(clamp($('nw').value,1,1000)*scale)+'px';el.style.fontFamily=$('font').value;el.style.fontSize=(clamp($('fontSize').value,1,200)*scale/S)+'px';el.style.textAlign=$('align').value;el.style.color=$('numColor').value;el.style.transform='rotate('+clamp($('nrot').value,-360,360)+'deg)'}
+function switchTab(t){current=t;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='p-'+t));let b=$('backStep');if(b)b.style.display=t==='arquivo'?'none':'inline-block';render()}
+document.querySelectorAll('.tab').forEach(x=>x.addEventListener('click',()=>switchTab(x.dataset.tab)));document.querySelectorAll('.go').forEach(x=>x.addEventListener('click',()=>switchTab(x.dataset.go)));
+$('backStep').addEventListener('click',()=>{if(current==='capas')switchTab('impressao');else if(current==='impressao')switchTab('numero');else if(current==='numero')switchTab('arquivo')});
+async function loadMainFile(f){
+ if(!f)return;
+ $('fname').textContent=f.name;
+ try{
+  if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
+   if(!window.pdfjsLib)throw new Error('Leitor de PDF não carregou. Verifique a internet.');
+   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+   const buf=await f.arrayBuffer(),doc=await pdfjsLib.getDocument({data:buf}).promise,pg=await doc.getPage(1),vp=pg.getViewport({scale:1});
+   $('pieceW').value=(vp.width*25.4/72).toFixed(2);$('pieceH').value=(vp.height*25.4/72).toFixed(2);
+   const scale=3,rv=pg.getViewport({scale}),cv=document.createElement('canvas');cv.width=Math.ceil(rv.width);cv.height=Math.ceil(rv.height);
+   await pg.render({canvasContext:cv.getContext('2d'),viewport:rv}).promise;artData=cv.toDataURL('image/png');render();return;
+  }
+  const data=await new Promise((ok,no)=>{let r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
+  artData=data;
+  const im=new Image();im.onload=()=>{let dpi=96; // browser pixels -> sensible default physical size; remains editable
+   $('pieceW').value=(im.naturalWidth/dpi*25.4).toFixed(2);$('pieceH').value=(im.naturalHeight/dpi*25.4).toFixed(2);render()};im.onerror=()=>render();im.src=data;
+ }catch(err){artData='';alert('Não foi possível abrir a arte: '+err.message);render()}
+}
+$('file').addEventListener('change',e=>loadMainFile(e.target.files[0]));
+$('coverFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;$('coverName').textContent=f.name;let r=new FileReader;r.onload=ev=>{coverData=ev.target.result;render()};r.readAsDataURL(f)});
+function syncSelectedFromControls(){if(!nums.length||selectedNum<0)return;let n=nums[selectedNum];n.x=clamp($('nx').value,-1000,2000);n.y=clamp($('ny').value,-1000,2000);n.w=clamp($('nw').value,1,1000);n.rot=clamp($('nrot').value,-360,360)}
+function loadSelectedControls(){if(!nums.length||selectedNum<0)return;let n=nums[selectedNum];$('nx').value=n.x;$('ny').value=n.y;$('nw').value=n.w;$('nrot').value=n.rot}
+function styleNum(el,n,scale=S){el.style.left=(n.x*scale)+'px';el.style.top=(n.y*scale)+'px';el.style.width=(n.w*scale)+'px';el.style.fontFamily=$('font').value;el.style.fontSize=(clamp($('fontSize').value,1,200)*scale/S)+'px';el.style.textAlign=$('align').value;el.style.color=$('numColor').value;el.style.transform='rotate('+n.rot+'deg)'}
+function createArt(parent){if(artData){let im=document.createElement('img');im.className='pieceArt';im.src=artData;parent.appendChild(im)}}
+function makePiece(){
+ let[w,h]=pieceDims(),vs=viewScale(),d=document.createElement('div');d.className='canvasPiece';d.style.width=w*vs+'px';d.style.height=h*vs+'px';createArt(d);
+ if(current==='numero'){let badge=document.createElement('div');badge.className='previewBadge';badge.textContent='PRÉVIA AO VIVO — clique em uma numeração para selecionar';d.appendChild(badge)}
+ if(current!=='numero')return d;
+ nums.forEach((obj,idx)=>{let n=document.createElement('div');n.className='num'+(idx===selectedNum?' sel':'');n.textContent=clamp($('start').value,0,999999999);styleNum(n,obj,vs);d.appendChild(n);
+ n.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();selectedNum=idx;loadSelectedControls();d.querySelectorAll('.num').forEach((el,j)=>el.classList.toggle('sel',j===idx));const target=e.currentTarget;const pid=e.pointerId,sx=e.clientX,sy=e.clientY,bx=obj.x,by=obj.y;try{target.setPointerCapture(pid)}catch(_){}const move=ev=>{if(ev.pointerId!==pid)return;obj.x=bx+(ev.clientX-sx)/vs;obj.y=by+(ev.clientY-sy)/vs;$('nx').value=obj.x.toFixed(1);$('ny').value=obj.y.toFixed(1);confirmed=false;styleNum(target,obj,vs);updateConfirm()};const stop=ev=>{if(ev.pointerId!==pid)return;try{target.releasePointerCapture(pid)}catch(_){}target.removeEventListener('pointermove',move);target.removeEventListener('pointerup',stop);target.removeEventListener('pointercancel',stop);render()};target.addEventListener('pointermove',move);target.addEventListener('pointerup',stop);target.addEventListener('pointercancel',stop)});
+ });return d
+}
+function calcLayout(){
+ let[sw,sh]=sheetDims(),[pw,ph]=pieceDims(),m=clamp($('margin').value,0,100),gh=clamp($('gapH').value,0,100),gv=clamp($('gapV').value,0,100);
+ const test=(w,h,rot)=>{let cols=Math.max(0,Math.floor((sw-2*m+gh)/(w+gh))),rows=Math.max(0,Math.floor((sh-2*m+gv)/(h+gv)));return{cols,rows,count:cols*rows,w,h,rot,manual:false,fits:true}};
+ let a=test(pw,ph,false),b=test(ph,pw,true);if($('autoLayout').checked)return $('autoRotate').checked&&b.count>a.count?b:a;
+ let cols=Math.round(clamp($('manualCols').value,1,10)),rows=Math.round(clamp($('manualRows').value,1,10));
+ let normal=(cols*pw+(cols-1)*gh<=sw-2*m&&rows*ph+(rows-1)*gv<=sh-2*m);
+ let rot=(cols*ph+(cols-1)*gh<=sw-2*m&&rows*pw+(rows-1)*gv<=sh-2*m);
+ let useRot=$('autoRotate').checked&&!normal&&rot,w=useRot?ph:pw,h=useRot?pw:ph;
+ return{cols,rows,count:cols*rows,w,h,rot:useRot,manual:true,fits:cols*w+(cols-1)*gh<=sw-2*m&&rows*h+(rows-1)*gv<=sh-2*m}
+}
+function sequenceTotal(){let a=Math.round(clamp($('start').value,0,999999999)),b=Math.round(clamp($('endNum').value,0,999999999));return Math.max(0,b-a+1)}
+function totalPages(){let L=calcLayout(),total=sequenceTotal();if(total<=0)return 1;return $('mode').value==='cut'?Math.max(1,Math.ceil(total/Math.max(1,L.count))):Math.max(1,Math.ceil(total/Math.max(1,L.count)))}
+function numberFor(i,p,L){
+ let start=Math.round(clamp($('start').value,0,999999999)),end=Math.round(clamp($('endNum').value,0,999999999)),pages=totalPages();
+ let n=$('mode').value==='cut'?start+i*pages+p:start+p*L.count+i;
+ return n<=end?n:'';
+}
+function createSheet(p,scale=S){
+ let[sw,sh]=sheetDims(),L=calcLayout(),m=clamp($('margin').value,0,100),gh=clamp($('gapH').value,0,100),gv=clamp($('gapV').value,0,100),sheet=document.createElement('div');sheet.className='sheet';sheet.style.width=sw*scale+'px';sheet.style.height=sh*scale+'px';
+ let usedW=L.cols*L.w+(L.cols-1)*gh,usedH=L.rows*L.h+(L.rows-1)*gv,ox=(sw-usedW)/2,oy=(sh-usedH)/2,[pw,ph]=pieceDims();
+ for(let r=0;r<L.rows;r++)for(let c=0;c<L.cols;c++){
+  let i=r*L.cols+c,x=ox+c*(L.w+gh),y=oy+r*(L.h+gv),pl=document.createElement('div');pl.className='placed';pl.style.left=x*scale+'px';pl.style.top=y*scale+'px';pl.style.width=L.w*scale+'px';pl.style.height=L.h*scale+'px';
+  let inner=document.createElement('div');inner.style.position='absolute';inner.style.left='0';inner.style.top='0';inner.style.width=pw*scale+'px';inner.style.height=ph*scale+'px';inner.style.transformOrigin='top left';
+  let tr='';
+  if(!L.rot&&!rot180.has(i)) tr='';
+  if(!L.rot&&rot180.has(i)) tr='translate('+pw*scale+'px,'+ph*scale+'px) rotate(180deg)';
+  if(L.rot&&!rot180.has(i)) tr='translate('+ph*scale+'px,0) rotate(90deg)';
+  if(L.rot&&rot180.has(i)) tr='translate(0,'+pw*scale+'px) rotate(-90deg)';
+  inner.style.transform=tr;
+  if(artData){let im=document.createElement('img');im.src=artData;im.style.position='absolute';im.style.inset='0';im.style.width='100%';im.style.height='100%';im.style.objectFit='fill';inner.appendChild(im)}
+  nums.forEach(obj=>{let n=document.createElement('div');n.className='placedNum';n.textContent=numberFor(i,p,L);if(!n.textContent)n.style.display='none';styleNum(n,obj,scale);inner.appendChild(n)});pl.appendChild(inner);sheet.appendChild(pl)
+ }
+ if($('cuts').checked){
+  for(let c=1;c<L.cols;c++){let x=(ox+c*L.w+(c-.5)*gh)*scale,e=document.createElement('div');e.className='cropV';e.style.left=x+'px';e.style.top=oy*scale+'px';e.style.height=usedH*scale+'px';sheet.appendChild(e)}
+  for(let r=1;r<L.rows;r++){let y=(oy+r*L.h+(r-.5)*gv)*scale,e=document.createElement('div');e.className='cropH';e.style.top=y+'px';e.style.left=ox*scale+'px';e.style.width=usedW*scale+'px';sheet.appendChild(e)}
+ }
+ return sheet
+}
+function buildPositions(){let L=calcLayout(),box=$('positions');box.innerHTML='';for(let i=0;i<L.count;i++){let b=document.createElement('button');b.className='posbtn'+(rot180.has(i)?' on':'');b.textContent=(i+1)+(rot180.has(i)?' ↻':'');b.title='Posição '+(i+1)+' — clique para girar 180°';b.addEventListener('click',()=>{rot180.has(i)?rot180.delete(i):rot180.add(i);render()});box.appendChild(b)}}
+function allBlocks(){
+ let start=Math.round(clamp($('start').value,0,999999999)),end=Math.round(clamp($('endNum').value,0,999999999)),per=Math.max(1,Math.round(clamp($('perBlock').value,1,999999999))),L=calcLayout(),pages=totalPages(),blocks=[];
+ if(end<start)return blocks;
+ let total=Math.ceil((end-start+1)/per);
+ for(let b=0;b<total;b++){
+   let first=start+b*per,last=Math.min(end,first+per-1),pos=0,layer=0;
+   if($('mode').value==='cut'){
+     let off=first-start; pos=Math.floor(off/pages); layer=Math.floor((off%pages)/per);
+   }else{
+     pos=b%L.count; layer=Math.floor(b/L.count);
+   }
+   if(pos>=L.count){pos=L.count-1}
+   blocks.push({block:b+1,first,last,pos,layer});
+ }
+ return blocks;
+}
+function coverPages(){let a=allBlocks();return Math.max(1,a.length?Math.max(...a.map(x=>x.layer))+1:1)}
+function coverInfo(i,q,L){return allBlocks().find(x=>x.pos===i&&x.layer===q)||null}
+function blockLabel(n){return $('blockFormat').value==='pad'?'BLOCO '+String(n).padStart(2,'0'):'BLOCO '+n}
+function createCoverSheet(q,scale=S){
+ let[sw,sh]=sheetDims(),L=calcLayout(),gh=clamp($('gapH').value,0,100),gv=clamp($('gapV').value,0,100),sheet=document.createElement('div');sheet.className='sheet';sheet.style.width=sw*scale+'px';sheet.style.height=sh*scale+'px';
+ let usedW=L.cols*L.w+(L.cols-1)*gh,usedH=L.rows*L.h+(L.rows-1)*gv,ox=(sw-usedW)/2,oy=(sh-usedH)/2,[pw,ph]=pieceDims();
+ for(let r=0;r<L.rows;r++)for(let c=0;c<L.cols;c++){let i=r*L.cols+c,info=coverInfo(i,q,L);if(!info)continue;let x=ox+c*(L.w+gh),y=oy+r*(L.h+gv),pl=document.createElement('div');pl.className='placed';pl.style.left=x*scale+'px';pl.style.top=y*scale+'px';pl.style.width=L.w*scale+'px';pl.style.height=L.h*scale+'px';let tag=document.createElement('div');tag.className='coverTag';tag.textContent='P'+(i+1)+' • '+blockLabel(info.block);pl.appendChild(tag);let inner=document.createElement('div');inner.style.position='absolute';inner.style.left='0';inner.style.top='0';inner.style.width=pw*scale+'px';inner.style.height=ph*scale+'px';inner.style.transformOrigin='top left';let tr='';if(!L.rot&&!rot180.has(i))tr='';if(!L.rot&&rot180.has(i))tr='translate('+pw*scale+'px,'+ph*scale+'px) rotate(180deg)';if(L.rot&&!rot180.has(i))tr='translate('+ph*scale+'px,0) rotate(90deg)';if(L.rot&&rot180.has(i))tr='translate(0,'+pw*scale+'px) rotate(-90deg)';inner.style.transform=tr;if(coverData){let im=document.createElement('img');im.src=coverData;im.style.position='absolute';im.style.inset='0';im.style.width='100%';im.style.height='100%';im.style.objectFit='fill';inner.appendChild(im)}else{inner.style.background='#f7f7f7'}let tx=clamp($('coverX').value,-1000,2000)*scale,ty=clamp($('coverY').value,-1000,2000)*scale,rx=clamp($('coverRangeX').value,-1000,2000)*scale,ry=clamp($('coverRangeY').value,-1000,2000)*scale;let a=document.createElement('div');a.style.cssText='position:absolute;font-weight:800;color:#111;white-space:nowrap;z-index:2';a.style.left=tx+'px';a.style.top=ty+'px';a.style.fontSize=(clamp($('coverFs1').value,1,100)*scale/S)+'px';a.textContent=blockLabel(info.block);inner.appendChild(a);let b=document.createElement('div');b.style.cssText='position:absolute;font-weight:700;color:#111;white-space:nowrap;z-index:2';b.style.left=rx+'px';b.style.top=ry+'px';b.style.fontSize=(clamp($('coverFs2').value,1,100)*scale/S)+'px';b.textContent=info.first+' a '+info.last;inner.appendChild(b);pl.appendChild(inner);sheet.appendChild(pl)}
+ if($('cuts').checked){for(let c=1;c<L.cols;c++){let x=(ox+c*L.w+(c-.5)*gh)*scale,e=document.createElement('div');e.className='cropV';e.style.left=x+'px';e.style.top=oy*scale+'px';e.style.height=usedH*scale+'px';sheet.appendChild(e)}for(let r=1;r<L.rows;r++){let y=(oy+r*L.h+(r-.5)*gv)*scale,e=document.createElement('div');e.className='cropH';e.style.top=y+'px';e.style.left=ox*scale+'px';e.style.width=usedW*scale+'px';sheet.appendChild(e)}}return sheet
+}
+function renderCovers(){let stage=$('stage');stage.innerHTML='';let cp=coverPages();coverPage=Math.max(0,Math.min(coverPage,cp-1));stage.appendChild(createCoverSheet(coverPage));let L=calcLayout(),per=Math.max(1,Math.round(clamp($('perBlock').value,1,999999999))),blocks=Math.ceil(sequenceTotal()/per),infos=[];for(let i=0;i<L.count;i++){let z=coverInfo(i,coverPage,L);if(z)infos.push('Posição '+(i+1)+': '+blockLabel(z.block)+' — '+z.first+' a '+z.last)}$('coverPageN').textContent=(coverPage+1)+' / '+cp;$('coverGo').max=cp;$('coverGo').value=coverPage+1;$('coverStat').innerHTML='<b>'+blocks+' blocos</b><br>'+per+' números por bloco<br><b>'+cp+' folha(s) de capa</b><br><span class="confirmed">Prévia e PDF usam a mesma ordem física das pilhas ('+L.count+' posições por folha).</span>';$('coverPageInfo').innerHTML='<b>Folha '+(coverPage+1)+' de '+cp+'</b><br>'+(infos.length?infos.join('<br>'):'Nenhuma capa nesta folha.')}
+function renderPrint(){let stage=$('stage');stage.innerHTML='';stage.appendChild(createSheet(page));let L=calcLayout(),[sw,sh]=sheetDims();$('layoutStat').innerHTML='<b>'+L.count+' peças por folha</b><br>'+L.cols+' colunas × '+L.rows+' linhas'+(L.rot?' • peça 90°':'')+(L.manual&&!L.fits?'<br><span class="warn">⚠ A distribuição ultrapassa a área útil.</span>':'')+'<br>Espaçamento: H '+$('gapH').value+' mm / V '+$('gapV').value+' mm<br>Total de páginas: <b>'+totalPages()+'</b><br>Folha: '+sw+' × '+sh+' mm';$('pageN').textContent=(page+1)+' / '+totalPages();buildPositions()}
+function updateSequenceStat(){let t=sequenceTotal();$('seqTotal').textContent=t>0?t+' números':'Verifique o número final'}
+function updateConfirm(){$('confirmState').innerHTML=confirmed?'<span class="confirmed">✓ Posição confirmada. Você já pode seguir para impressão.</span>':'Use o zoom e confira a posição exata do número na arte antes de confirmar.'}
+function render(){updateSequenceStat();if($('numCount'))$('numCount').textContent=nums.length+' numeração'+(nums.length===1?' inserida':' inseridas');let stage=$('stage');stage.innerHTML='';let[w,h]=pieceDims();$('pieceStat').textContent=w+' × '+h+' mm';if(current==='impressao'){page=Math.min(page,totalPages()-1);renderPrint()}else if(current==='capas'){renderCovers()}else stage.appendChild(makePiece());updateConfirm()}
+$('sheetPreset').addEventListener('change',()=>{if($('sheetPreset').value!=='custom'){let a=$('sheetPreset').value.split(',');$('sheetW').value=a[0];$('sheetH').value=a[1]}render()});
+['pieceW','pieceH','pieceOri','start','endNum','mode','font','fontSize','zoom','align','nx','ny','nw','nrot','sheetW','sheetH','sheetOri','margin','gapH','gapV','manualCols','manualRows','autoLayout','autoRotate','cuts','perBlock','coverX','coverY','coverRangeX','coverRangeY','coverFs1','coverFs2','blockFormat'].forEach(id=>$(id).addEventListener('input',()=>{if(['nx','ny','nw','nrot'].includes(id))syncSelectedFromControls();if(['font','fontSize','align','nx','ny','nw','nrot'].includes(id)){confirmed=false}render()}));
+$('numColor').addEventListener('input',()=>{$('colorHex').value=$('numColor').value;confirmed=false;render()});$('colorHex').addEventListener('change',()=>{if(/^#[0-9a-fA-F]{6}$/.test($('colorHex').value))$('numColor').value=$('colorHex').value;confirmed=false;render()});
+document.querySelectorAll('.nudge button[data-dx]').forEach(b=>b.addEventListener('click',()=>{if(!nums.length)return;let st=+$('nudgeStep').value,ob=nums[selectedNum];ob.x+=(+b.dataset.dx)*st;ob.y+=(+b.dataset.dy)*st;loadSelectedControls();confirmed=false;render()}));
+$('fitZoom').addEventListener('click',()=>{$('zoom').value='1';render()});
+$('centerNum').addEventListener('click',()=>{if(!nums.length)return;let[w]=pieceDims(),ob=nums[selectedNum];ob.x=(w-ob.w)/2;loadSelectedControls();confirmed=false;render()});$('addNum').addEventListener('click',()=>{let base=nums[selectedNum]||{x:10,y:10,w:25,rot:0};nums.push({x:base.x+5,y:base.y+5,w:base.w,rot:base.rot});selectedNum=nums.length-1;loadSelectedControls();confirmed=false;render()});$('deleteNum').addEventListener('click',()=>{if(!nums.length)return;nums.splice(selectedNum,1);selectedNum=Math.min(selectedNum,nums.length-1);if(nums.length)loadSelectedControls();confirmed=false;render()});$('confirmPos').addEventListener('click',()=>{confirmed=true;updateConfirm()});
+$('autoLayout').addEventListener('change',()=>{$('manualCols').disabled=$('autoLayout').checked;$('manualRows').disabled=$('autoLayout').checked;render()});
+$('prev').addEventListener('click',()=>{page=Math.max(0,page-1);render()});$('next').addEventListener('click',()=>{page=Math.min(totalPages()-1,page+1);render()});
+$('pdfBtn').addEventListener('click',async()=>{
+ const btn=$('pdfBtn'),old=btn.textContent;
+ try{
+   if(!window.PDFLib) throw new Error('Biblioteca de PDF não carregou. Verifique sua conexão com a internet.');
+   if(!artData) throw new Error('Abra primeiro a arte PNG, JPG ou PDF.');
+   btn.disabled=true;btn.textContent='Gerando PDF...';
+   const {PDFDocument,StandardFonts,rgb,degrees}=PDFLib;
+   const pdf=await PDFDocument.create();
+   const mm=72/25.4,[sw,sh]=sheetDims(),L=calcLayout(),m=clamp($('margin').value,0,100),gh=clamp($('gapH').value,0,100),gv=clamp($('gapV').value,0,100);
+   const bytes=await (await fetch(artData)).arrayBuffer();
+   const isPng=artData.startsWith('data:image/png');
+   const art=isPng?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);
+   // Keep the PDF typography consistent with the preview (.num/.placedNum use font-weight:700).
+   let fontName=StandardFonts.HelveticaBold;
+   if($('font').value==='Times New Roman')fontName=StandardFonts.TimesRomanBold;
+   if($('font').value==='Courier New')fontName=StandardFonts.CourierBold;
+   const font=await pdf.embedFont(fontName);
+   const hex=$('numColor').value.replace('#','');
+   const col=rgb(parseInt(hex.slice(0,2),16)/255,parseInt(hex.slice(2,4),16)/255,parseInt(hex.slice(4,6),16)/255);
+   const usedW=L.cols*L.w+(L.cols-1)*gh,usedH=L.rows*L.h+(L.rows-1)*gv,ox=(sw-usedW)/2,oy=(sh-usedH)/2;
+   const [pw,ph]=pieceDims(),pages=totalPages(),fs=clamp($('fontSize').value,1,200);
+   for(let p=0;p<pages;p++){
+     const pg=pdf.addPage([sw*mm,sh*mm]);
+     for(let r=0;r<L.rows;r++)for(let c=0;c<L.cols;c++){
+       const i=r*L.cols+c,num=numberFor(i,p,L);if(num==='')continue;
+       const x=ox+c*(L.w+gh),yTop=oy+r*(L.h+gv);
+       const is180=rot180.has(i);
+       // Draw artwork and number as one logical piece transform.
+       // This keeps the number in the same relative corner when a position is rotated 180°.
+       // PDF-lib rotates around the image's lower-left anchor.
+       // Use explicit anchors so every rotated artwork stays inside its own imposed cell.
+       let artX,artY,artRot;
+       if(!L.rot && !is180){artX=x;artY=sh-yTop-ph;artRot=0}
+       if(!L.rot && is180){artX=x+pw;artY=sh-yTop;artRot=180}
+       if(L.rot && !is180){artX=x+ph;artY=sh-yTop-pw;artRot=90}
+       if(L.rot && is180){artX=x;artY=sh-yTop;artRot=-90}
+       pg.drawImage(art,{x:artX*mm,y:artY*mm,width:pw*mm,height:ph*mm,rotate:degrees(artRot)});
+
+       nums.forEach(ob=>{const text=String(num),textW=font.widthOfTextAtSize(text,fs),boxW=ob.w*mm;let localTextX=ob.x*mm;if($('align').value==='center')localTextX+=(boxW-textW)/2;if($('align').value==='right')localTextX+=boxW-textW;let lx=localTextX/mm,baselineTop=ob.y+fs/mm,tx,ty,trot=ob.rot;if(!L.rot&&!is180){tx=x+lx;ty=sh-(yTop+baselineTop);trot=ob.rot}if(!L.rot&&is180){tx=x+pw-lx;ty=sh-(yTop+ph-baselineTop);trot=ob.rot+180}if(L.rot&&!is180){tx=x+ph-baselineTop;ty=sh-(yTop+lx);trot=ob.rot+90}if(L.rot&&is180){tx=x+baselineTop;ty=sh-(yTop+pw-lx);trot=ob.rot-90}pg.drawText(text,{x:tx*mm,y:ty*mm,size:fs,font,color:col,rotate:degrees(trot)})});
+     }
+     if($('cuts').checked){
+       for(let c=1;c<L.cols;c++){let x=ox+c*L.w+(c-.5)*gh;pg.drawLine({start:{x:x*mm,y:(sh-oy)*mm},end:{x:x*mm,y:(sh-oy-usedH)*mm},thickness:.35,color:rgb(.15,.15,.15)})}
+       for(let r=1;r<L.rows;r++){let y=oy+r*L.h+(r-.5)*gv;pg.drawLine({start:{x:ox*mm,y:(sh-y)*mm},end:{x:(ox+usedW)*mm,y:(sh-y)*mm},thickness:.35,color:rgb(.15,.15,.15)})}
+     }
+   }
+   pdf.setTitle('FB Print - Numerado');
+   const out=await pdf.save();
+   const blob=new Blob([out],{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+   a.href=url;a.download='FB_Print_Numerado_'+$('start').value+'_a_'+$('endNum').value+'.pdf';document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),3000);
+ }catch(e){alert('Não foi possível gerar o PDF: '+e.message)}
+ finally{btn.disabled=false;btn.textContent=old}
+});
+$('coverPrev').addEventListener('click',()=>{coverPage=Math.max(0,coverPage-1);render()});$('coverNext').addEventListener('click',()=>{coverPage=Math.min(coverPages()-1,coverPage+1);render()});$('coverFirst').addEventListener('click',()=>{coverPage=0;render()});$('coverLast').addEventListener('click',()=>{coverPage=coverPages()-1;render()});$('coverGoBtn').addEventListener('click',()=>{coverPage=Math.max(0,Math.min(coverPages()-1,Math.round(clamp($('coverGo').value,1,coverPages()))-1));render()});$('coverGo').addEventListener('keydown',e=>{if(e.key==='Enter')$('coverGoBtn').click()});
+$('coverPdfBtn').addEventListener('click',async()=>{const btn=$('coverPdfBtn'),old=btn.textContent;try{if(!window.PDFLib)throw new Error('Biblioteca de PDF não carregou.');btn.disabled=true;btn.textContent='Gerando capas...';const{PDFDocument,StandardFonts,rgb,degrees}=PDFLib,pdf=await PDFDocument.create(),mm=72/25.4,[sw,sh]=sheetDims(),L=calcLayout(),gh=clamp($('gapH').value,0,100),gv=clamp($('gapV').value,0,100),[pw,ph]=pieceDims(),usedW=L.cols*L.w+(L.cols-1)*gh,usedH=L.rows*L.h+(L.rows-1)*gv,ox=(sw-usedW)/2,oy=(sh-usedH)/2,font=await pdf.embedFont(StandardFonts.HelveticaBold);let art=null;if(coverData){let bytes=await(await fetch(coverData)).arrayBuffer();art=coverData.startsWith('data:image/png')?await pdf.embedPng(bytes):await pdf.embedJpg(bytes)}for(let q=0;q<coverPages();q++){let pg=pdf.addPage([sw*mm,sh*mm]);for(let r=0;r<L.rows;r++)for(let c=0;c<L.cols;c++){let i=r*L.cols+c,info=coverInfo(i,q,L);if(!info)continue;let x=ox+c*(L.w+gh),yTop=oy+r*(L.h+gv),is180=rot180.has(i),artX,artY,artRot;if(!L.rot&&!is180){artX=x;artY=sh-yTop-ph;artRot=0}if(!L.rot&&is180){artX=x+pw;artY=sh-yTop;artRot=180}if(L.rot&&!is180){artX=x+ph;artY=sh-yTop-pw;artRot=90}if(L.rot&&is180){artX=x;artY=sh-yTop;artRot=-90}if(art)pg.drawImage(art,{x:artX*mm,y:artY*mm,width:pw*mm,height:ph*mm,rotate:degrees(artRot)});let lx=clamp($('coverX').value,-1000,2000),ly=clamp($('coverY').value,-1000,2000),rx=clamp($('coverRangeX').value,-1000,2000),ry=clamp($('coverRangeY').value,-1000,2000),fs1=clamp($('coverFs1').value,1,100),fs2=clamp($('coverFs2').value,1,100);const drawLocal=(text,left,top,fs)=>{let tx,ty,trot=0;if(!L.rot&&!is180){tx=x+left;ty=sh-(yTop+top+fs/mm)}if(!L.rot&&is180){tx=x+pw-left;ty=sh-(yTop+ph-(top+fs/mm));trot=180}if(L.rot&&!is180){tx=x+ph-(top+fs/mm);ty=sh-(yTop+left);trot=90}if(L.rot&&is180){tx=x+(top+fs/mm);ty=sh-(yTop+pw-left);trot=-90}pg.drawText(text,{x:tx*mm,y:ty*mm,size:fs,font,color:rgb(0,0,0),rotate:degrees(trot)})};drawLocal(blockLabel(info.block),lx,ly,fs1);drawLocal(info.first+' a '+info.last,rx,ry,fs2)}if($('cuts').checked){for(let c=1;c<L.cols;c++){let x=ox+c*L.w+(c-.5)*gh;pg.drawLine({start:{x:x*mm,y:(sh-oy)*mm},end:{x:x*mm,y:(sh-oy-usedH)*mm},thickness:.35,color:rgb(.15,.15,.15)})}for(let r=1;r<L.rows;r++){let y=oy+r*L.h+(r-.5)*gv;pg.drawLine({start:{x:ox*mm,y:(sh-y)*mm},end:{x:(ox+usedW)*mm,y:(sh-y)*mm},thickness:.35,color:rgb(.15,.15,.15)})}}}pdf.setTitle('FB Print - Capas dos Blocos');let out=await pdf.save(),blob=new Blob([out],{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='FB_Print_Capas_dos_Blocos.pdf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}catch(e){alert('Não foi possível gerar o PDF das capas: '+e.message)}finally{btn.disabled=false;btn.textContent=old}});
+render();
+</script>
+</body></html>
